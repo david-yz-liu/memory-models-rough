@@ -7,8 +7,8 @@
 /out-tsc
 
 # Static web output
-/build
-.docusaurus
+build/
+.docusaurus/
 
 # Runtime data
 pids
