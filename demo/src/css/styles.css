@@ -1,1 +1,8 @@
 /* Custom CSS goes here */
+/* Hides the arrows that come by default with MUI Textfield of type 'number'*/
+/* https://stackoverflow.com/a/50824080 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

@@ -16,6 +16,14 @@ jest.mock("../../../src/index", () => ({
 
 describe("SvgDisplay", () => {
     const setSvgResultMock = jest.fn();
+    const seedMock = 1234;
+    const configDataMock = {
+        useAutomation: true,
+        overallDrawConfig: {
+            seed: seedMock,
+        },
+        individualDrawConfig: [],
+    };
     describe.each([
         ["valid JSON but not valid Memory Models JSON", [{}]],
         [
@@ -43,12 +51,13 @@ describe("SvgDisplay", () => {
                 },
             ],
         ],
-    ])("when jsonResult is not null and %s", (scenario, jsonResult) => {
+    ])("when jsonResult is not null and %s", (_, jsonResult) => {
         beforeEach(() => {
             render(
                 <SvgDisplay
                     jsonResult={jsonResult}
                     setSvgResult={setSvgResultMock}
+                    configData={configDataMock}
                 />
             );
         });
@@ -61,6 +70,7 @@ describe("SvgDisplay", () => {
 
         it("calls functions with correct parameters", () => {
             expect(draw).toHaveBeenNthCalledWith(1, jsonResult, true, {
+                seed: seedMock,
                 width: 1300,
             });
             expect(setSvgResultMock).toHaveBeenNthCalledWith(
@@ -74,7 +84,11 @@ describe("SvgDisplay", () => {
 
     it("does not render any diagrams when jsonResult is null", () => {
         render(
-            <SvgDisplay jsonResult={null} setSvgResult={setSvgResultMock} />
+            <SvgDisplay
+                jsonResult={null}
+                setSvgResult={setSvgResultMock}
+                configData={configDataMock}
+            />
         );
         const canvasElement = screen.getByTestId("memory-models-canvas");
         expect(canvasElement.getAttribute("ref")).toBeNull();

@@ -1,16 +1,34 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import MemoryModelsUserInput from "../MemoryModels";
+import {
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+    within,
+} from "@testing-library/react";
+import MemoryModelsUserInput from "../MemoryModelsUserInput";
 
 describe("MemoryModelsUserInput", () => {
     // submit button by default resets the form https://stackoverflow.com/a/62404526
     const onSubmitMock = jest.fn((e) => e.preventDefault());
     const setTextDataMock = jest.fn();
     const setFailureBannerMock = jest.fn();
+    const configDataMock = {
+        useAutomation: true,
+        overallDrawConfig: {
+            seed: 0,
+        },
+        individualDrawConfig: [],
+    };
+    const setConfigDataMock = jest.fn();
     const jsonResult = "";
+    let textDataMock: string;
 
-    it("does not submit the form or enable the submit button with empty textData", () => {
-        const textDataMock = "";
+    beforeEach(() => {
+        textDataMock = "";
+    });
+
+    it("renders Accordion for MemoryModelsConfigInput", () => {
         render(
             <MemoryModelsUserInput
                 onTextDataSubmit={onSubmitMock}
@@ -18,6 +36,25 @@ describe("MemoryModelsUserInput", () => {
                 textData={textDataMock}
                 setFailureBanner={setFailureBannerMock}
                 jsonResult={jsonResult}
+                configData={configDataMock}
+                setConfigData={setConfigDataMock}
+            />
+        );
+        expect(
+            screen.getByTestId("optional-styles-accordion").textContent
+        ).toEqual("Optional Styling");
+    });
+
+    it("does not submit the form or enable the submit button with empty textData", () => {
+        render(
+            <MemoryModelsUserInput
+                onTextDataSubmit={onSubmitMock}
+                setTextData={setTextDataMock}
+                textData={textDataMock}
+                setFailureBanner={setFailureBannerMock}
+                jsonResult={jsonResult}
+                configData={configDataMock}
+                setConfigData={setConfigDataMock}
             />
         );
 
@@ -29,8 +66,6 @@ describe("MemoryModelsUserInput", () => {
     });
 
     it("accepts changes to formData", () => {
-        const textDataMock = "";
-
         render(
             <MemoryModelsUserInput
                 onTextDataSubmit={onSubmitMock}
@@ -38,6 +73,8 @@ describe("MemoryModelsUserInput", () => {
                 textData={textDataMock}
                 setFailureBanner={setFailureBannerMock}
                 jsonResult={jsonResult}
+                configData={configDataMock}
+                setConfigData={setConfigDataMock}
             />
         );
 
@@ -49,8 +86,8 @@ describe("MemoryModelsUserInput", () => {
     });
 
     describe("with non-empty formData", () => {
-        const textDataMock = "Form data";
         beforeEach(() => {
+            textDataMock = "Form data";
             render(
                 <MemoryModelsUserInput
                     onTextDataSubmit={onSubmitMock}
@@ -58,6 +95,8 @@ describe("MemoryModelsUserInput", () => {
                     textData={textDataMock}
                     setFailureBanner={setFailureBannerMock}
                     jsonResult={jsonResult}
+                    configData={configDataMock}
+                    setConfigData={setConfigDataMock}
                 />
             );
         });
@@ -77,8 +116,6 @@ describe("MemoryModelsUserInput", () => {
 
     describe("MemoryModelsFileInput", () => {
         beforeEach(() => {
-            const textDataMock = "";
-
             render(
                 <MemoryModelsUserInput
                     onTextDataSubmit={onSubmitMock}
@@ -86,6 +123,8 @@ describe("MemoryModelsUserInput", () => {
                     textData={textDataMock}
                     setFailureBanner={setFailureBannerMock}
                     jsonResult={jsonResult}
+                    configData={configDataMock}
+                    setConfigData={setConfigDataMock}
                 />
             );
         });
@@ -172,6 +211,73 @@ describe("MemoryModelsUserInput", () => {
                     );
                 });
             });
+        });
+    });
+
+    describe("MemoryModelsConfigInput", () => {
+        beforeEach(() => {
+            render(
+                <MemoryModelsUserInput
+                    onTextDataSubmit={onSubmitMock}
+                    setTextData={setTextDataMock}
+                    textData={textDataMock}
+                    setFailureBanner={setFailureBannerMock}
+                    jsonResult={jsonResult}
+                    configData={configDataMock}
+                    setConfigData={setConfigDataMock}
+                />
+            );
+        });
+
+        it("renders a number input with correct props and checkbox that is checked by default", () => {
+            const seedInput: HTMLInputElement =
+                screen.getByTestId("config-seed");
+            //TODO: get max and min values from backend config
+            [
+                ["max", (2 ** 31).toString()],
+                ["min", "0"],
+                ["type", "number"],
+            ].forEach(([property, value]) => {
+                expect(seedInput).toHaveProperty(property, value);
+            });
+
+            // According to https://mui.com/material-ui/react-checkbox/#accessibility, checkboxes should always
+            // have labels, so testing with label text rather than data-testid here.
+            const automationCheckbox: HTMLInputElement = screen.getByLabelText(
+                "Generate with automation"
+            );
+            expect(automationCheckbox.checked).toBe(true);
+        });
+
+        it("handles seed change", () => {
+            const seedInput: HTMLInputElement =
+                screen.getByTestId("config-seed");
+            const mockSeed = "123";
+            fireEvent.change(seedInput, { target: { value: mockSeed } });
+            expect(setConfigDataMock).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    ...configDataMock,
+                    overallDrawConfig: {
+                        ...configDataMock.overallDrawConfig,
+                        seed: Number("123"),
+                    },
+                })
+            );
+        });
+
+        it("handles automation change", () => {
+            const automationCheckbox: HTMLInputElement = screen.getByLabelText(
+                "Generate with automation"
+            );
+            fireEvent.click(automationCheckbox);
+            expect(setConfigDataMock).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    ...configDataMock,
+                    useAutomation: false,
+                })
+            );
         });
     });
 });
